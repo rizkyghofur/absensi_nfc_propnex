@@ -149,8 +149,15 @@
 
               <!-- Text Record Display (Agent Info) -->
               <div class="text-display hidden" id="textDisplay">
-                <div class="text-row-group">
-                  <div class="text-row" style="margin-bottom: 8px">
+                <div
+                  class="text-row-group"
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                  "
+                >
+                  <div class="text-row">
                     <span class="text-icon">💼</span>
                     <div class="text-content">
                       <label>Agent ID</label>
