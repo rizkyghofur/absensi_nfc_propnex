@@ -379,7 +379,8 @@ function initNFC() {
         });
       }
 
-      reader.on("card", async (card) => {
+      // Function to process and send card data
+      const processCard = async (card) => {
         console.log(
           `[NFC] Card detected - UID: ${card.uid || "unknown"}, ATR: ${card.atr ? card.atr.toString("hex") : "none"}`,
         );
@@ -412,7 +413,24 @@ function initNFC() {
         if (mainWindow) {
           mainWindow.webContents.send("nfc:card-detected", cardData);
         }
+      };
+
+      // Listen for new cards
+      reader.on("card", async (card) => {
+        await processCard(card);
       });
+
+      // Check if a card is already present when the reader is connected
+      setTimeout(async () => {
+        if (reader.card) {
+          console.log(
+            "[NFC] Card already present on reader upon connection. Forcing read.",
+          );
+          await processCard(reader.card);
+        } else {
+          console.log("[NFC] No card initially present.");
+        }
+      }, 1000);
 
       reader.on("card.off", (card) => {
         console.log(`[NFC] Card removed`);

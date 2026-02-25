@@ -18,7 +18,8 @@
   "type": "commonjs",
   "dependencies": {
     "electron": "^40.6.1",
-    "nfc-pcsc": "^0.8.1"
+    "nfc-pcsc": "^0.8.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3"

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;"
+      content="default-src 'self'; connect-src 'self' https://newapi.propnex.id; img-src 'self' data: https://newapi.propnex.id; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;"
     />
     <title>PropNex NFC Attendance System</title>
     <link
@@ -47,10 +47,27 @@
         </div>
       </header>
 
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-target="cekKartuView">
+          <span class="tab-icon">🔍</span>
+          Cek Kartu NFC
+        </button>
+        <button class="nav-tab" data-target="presensiView">
+          <span class="tab-icon">📅</span>
+          Presensi Kartu NFC
+        </button>
+      </nav>
+
       <!-- Main Content -->
       <main class="main-content">
-        <!-- NFC Scan Area -->
-        <div class="scan-section">
+        <!-- VIEWS WRAPPER -->
+        <div class="views-wrapper" id="viewsWrapper">
+          
+          <!-- VIEW 1: CEK KARTU NFC (Default) -->
+          <div class="view-container active" id="cekKartuView">
+            <!-- NFC Scan Area -->
+            <div class="scan-section">
           <div class="scan-card" id="scanCard">
             <div class="scan-rings" id="scanRings">
               <div class="ring ring-1"></div>
@@ -184,9 +201,99 @@
                   </div>
                 </div>
               </div>
+              </div>
+            </div> <!-- closes ndefRecords -->
+          </div> <!-- closes cardInfo -->
+        </div> <!-- closes scan-section -->
+      </div> <!-- closes cekKartuView -->
+
+        <!-- VIEW 2: PRESENSI KARTU NFC -->
+        <div class="view-container" id="presensiView">
+          <div class="presensi-section">
+            <div class="header-action presensi-header">
+              <h2>Mode Presensi</h2>
+              <div class="event-selector">
+                <label for="eventSelect">Pilih Event:</label>
+                <select id="eventSelect" class="presensi-select">
+                  <option value="">Memuat event...</option>
+                </select>
+                <button id="btnRefreshEvents" class="btn-clear refresh-btn" title="Refresh Event">↻</button>
+              </div>
+            </div>
+
+            <div class="scan-card" id="presensiScanCard">
+              <div class="scan-rings" id="presensiScanRings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+              </div>
+              <div class="scan-icon" id="presensiScanIcon">
+                <!-- Reuse NFC icon SVG -->
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <path d="M12 32C12 20.954 20.954 12 32 12C43.046 12 52 20.954 52 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+                  <path d="M18 32C18 24.268 24.268 18 32 18C39.732 18 46 24.268 46 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                  <path d="M24 32C24 27.582 27.582 24 32 24C36.418 24 40 27.582 40 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                  <circle cx="32" cy="32" r="4" fill="currentColor" />
+                  <path d="M32 36V52" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="scan-text" id="presensiScanText">
+                <h2>Siap Membaca</h2>
+                <p>Tempelkan kartu peserta ke reader</p>
+              </div>
+            </div>
+
+            <!-- Presensi Result Display -->
+            <div class="card-info hidden" id="presensiResultInfo">
+              <div class="presensi-status-box" id="presensiStatusBox">
+                <!-- Status will be injected here (Success/Error) -->
+              </div>
+              
+              <div class="card-info-grid">
+                <div class="info-item">
+                  <label>Agent Name</label>
+                  <span id="presensiAgentName" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                  <label>Waktu Presensi</label>
+                  <span id="presensiTime" class="info-value">-</span>
+                </div>
+              </div>
+              
+              <div class="text-row-group presensi-grid-bottom">
+                <div class="info-item">
+                  <label>Agent ID</label>
+                  <span id="presensiAgentId" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                  <label>Branch Code</label>
+                  <span id="presensiBranchCode" class="info-value">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Presence List -->
+            <div class="presence-list-container">
+              <div class="presence-list-header">
+                <div class="header-main">
+                  <h3>Status Kehadiran</h3>
+                  <span id="presenceCount" class="presence-badge">0 Peserta</span>
+                </div>
+                <div class="presence-search">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" id="agentSearchInput" placeholder="Cari nama agen..." autocomplete="off">
+                </div>
+              </div>
+              <div class="presence-list" id="presenceList">
+                <div class="presence-empty" id="presenceEmpty">
+                  Pilih event untuk melihat daftar kehadiran
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+      </div>
 
         <!-- Scan History -->
         <div class="history-section">
