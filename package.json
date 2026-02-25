@@ -1,0 +1,26 @@
+{
+  "name": "absensi-nfc-propnex",
+  "version": "1.0.0",
+  "description": "Aplikasi Desktop NFC Attendance System menggunakan ACR122U",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w nfc-pcsc"
+  },
+  "keywords": [
+    "nfc",
+    "acr122u",
+    "attendance",
+    "electron"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "electron": "^40.6.1",
+    "nfc-pcsc": "^0.8.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.3"
+  }
+}
