@@ -1,5 +1,9 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
+
+// Set process title and name for better branding
+process.title = "PropNex NFC";
+app.setName("PropNex NFC");
 
 let mainWindow;
 let nfc;
@@ -20,6 +24,11 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+
+  // Set dock icon explicitly for macOS
+  if (process.platform === "darwin") {
+    app.dock.setIcon(path.join(__dirname, "assets", "icon.png"));
+  }
 
   mainWindow.loadFile("index.html");
 
@@ -496,6 +505,9 @@ app.whenReady().then(() => {
       initNFC();
     }
   });
+
+  // Remove default menu
+  Menu.setApplicationMenu(null);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

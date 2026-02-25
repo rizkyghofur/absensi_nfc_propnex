@@ -1,7 +1,8 @@
 {
-  "name": "absensi-nfc-propnex",
+  "name": "propnex-nfc-attendance",
+  "productName": "PropNex NFC Attendance System",
   "version": "1.0.0",
-  "description": "Aplikasi Desktop NFC Attendance System menggunakan ACR122U",
+  "description": "PropNex NFC Attendance System",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -22,6 +23,24 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.0.3"
+    "@electron/rebuild": "^4.0.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.propnex.nfc.attendance",
+    "productName": "PropNex NFC Attendance System",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "icon": "assets/icon.png",
+      "category": "public.app-category.business"
+    },
+    "win": {
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
+    }
   }
 }

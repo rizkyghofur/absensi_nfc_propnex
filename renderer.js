@@ -149,7 +149,9 @@ async function loadPresenceList(eventId) {
 
   try {
     const data = await fetchPresenceApi(eventId);
-    participantsList = data?.point_list || [];
+    participantsList = (data?.point_list || []).sort((a, b) => {
+      return new Date(b.date_history) - new Date(a.date_history);
+    });
     renderPresenceList(participantsList);
   } catch (err) {
     console.error("Error loading presence list:", err);
