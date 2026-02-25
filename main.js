@@ -471,7 +471,13 @@ function initNFC() {
 
 app.whenReady().then(() => {
   createWindow();
-  initNFC();
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    // Only initialize NFC after the UI is ready to receive IPC messages
+    if (!nfc) {
+      initNFC();
+    }
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

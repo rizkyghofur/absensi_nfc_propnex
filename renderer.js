@@ -241,6 +241,8 @@ function showCardRemoved() {
       <h2>Siap Membaca</h2>
       <p>Tempelkan kartu NFC ke reader</p>
     `;
+    // Hide previous card info
+    cardInfoEl.classList.add("hidden");
   }
 }
 
