@@ -221,72 +221,78 @@
               </div>
             </div>
 
-            <div class="scan-card" id="presensiScanCard">
-              <div class="scan-rings" id="presensiScanRings">
-                <div class="ring ring-1"></div>
-                <div class="ring ring-2"></div>
-                <div class="ring ring-3"></div>
+            <div class="presensi-content-grid">
+              <!-- Left Column: Presence List (2/3) -->
+              <div class="presensi-left-col">
+                <div class="presence-list-container">
+                  <div class="presence-list-header">
+                    <div class="header-main">
+                      <h3>Status Kehadiran</h3>
+                      <span id="presenceCount" class="presence-badge">0 Peserta</span>
+                    </div>
+                    <div class="presence-search">
+                      <span class="search-icon">🔍</span>
+                      <input type="text" id="agentSearchInput" placeholder="Cari nama agen..." autocomplete="off">
+                    </div>
+                  </div>
+                  <div class="presence-list" id="presenceList">
+                    <div class="presence-empty" id="presenceEmpty">
+                      Pilih event untuk melihat daftar kehadiran
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="scan-icon" id="presensiScanIcon">
-                <!-- Reuse NFC icon SVG -->
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                  <path d="M12 32C12 20.954 20.954 12 32 12C43.046 12 52 20.954 52 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
-                  <path d="M18 32C18 24.268 24.268 18 32 18C39.732 18 46 24.268 46 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
-                  <path d="M24 32C24 27.582 27.582 24 32 24C36.418 24 40 27.582 40 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-                  <circle cx="32" cy="32" r="4" fill="currentColor" />
-                  <path d="M32 36V52" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <div class="scan-text" id="presensiScanText">
-                <h2>Siap Membaca</h2>
-                <p>Tempelkan kartu peserta ke reader</p>
-              </div>
-            </div>
 
-            <!-- Presensi Result Display -->
-            <div class="card-info hidden" id="presensiResultInfo">
-              <div class="presensi-status-box" id="presensiStatusBox">
-                <!-- Status will be injected here (Success/Error) -->
-              </div>
-              
-              <div class="card-info-grid">
-                <div class="info-item">
-                  <label>Agent Name</label>
-                  <span id="presensiAgentName" class="info-value">-</span>
+              <!-- Right Column: Scan Area (1/3) -->
+              <div class="presensi-right-col">
+                <div class="scan-card small-scan" id="presensiScanCard">
+                  <div class="scan-rings" id="presensiScanRings">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
+                  </div>
+                  <div class="scan-icon" id="presensiScanIcon">
+                    <!-- Reuse NFC icon SVG -->
+                    <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                      <path d="M12 32C12 20.954 20.954 12 32 12C43.046 12 52 20.954 52 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+                      <path d="M18 32C18 24.268 24.268 18 32 18C39.732 18 46 24.268 46 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                      <path d="M24 32C24 27.582 27.582 24 32 24C36.418 24 40 27.582 40 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                      <circle cx="32" cy="32" r="4" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <div class="scan-text" id="presensiScanText">
+                    <h2>Siap Membaca</h2>
+                    <p>Tempelkan kartu peserta</p>
+                  </div>
                 </div>
-                <div class="info-item">
-                  <label>Waktu Presensi</label>
-                  <span id="presensiTime" class="info-value">-</span>
-                </div>
-              </div>
-              
-              <div class="text-row-group presensi-grid-bottom">
-                <div class="info-item">
-                  <label>Agent ID</label>
-                  <span id="presensiAgentId" class="info-value">-</span>
-                </div>
-                <div class="info-item">
-                  <label>Branch Code</label>
-                  <span id="presensiBranchCode" class="info-value">-</span>
-                </div>
-              </div>
-            </div>
 
-            <!-- Presence List -->
-            <div class="presence-list-container">
-              <div class="presence-list-header">
-                <div class="header-main">
-                  <h3>Status Kehadiran</h3>
-                  <span id="presenceCount" class="presence-badge">0 Peserta</span>
-                </div>
-                <div class="presence-search">
-                  <span class="search-icon">🔍</span>
-                  <input type="text" id="agentSearchInput" placeholder="Cari nama agen..." autocomplete="off">
-                </div>
-              </div>
-              <div class="presence-list" id="presenceList">
-                <div class="presence-empty" id="presenceEmpty">
-                  Pilih event untuk melihat daftar kehadiran
+                <!-- Presensi Result Display -->
+                <div class="card-info hidden" id="presensiResultInfo">
+                  <div class="presensi-status-box" id="presensiStatusBox">
+                    <!-- Status will be injected here (Success/Error) -->
+                  </div>
+                  
+                  <div class="card-info-grid single-col">
+                    <div class="info-item">
+                      <label>Agent Name</label>
+                      <span id="presensiAgentName" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                      <label>Waktu Presensi</label>
+                      <span id="presensiTime" class="info-value">-</span>
+                    </div>
+                  </div>
+                  
+                  <div class="text-row-group presensi-grid-bottom single-col">
+                    <div class="info-item">
+                      <label>Agent ID</label>
+                      <span id="presensiAgentId" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                      <label>Branch Code</label>
+                      <span id="presensiBranchCode" class="info-value">-</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

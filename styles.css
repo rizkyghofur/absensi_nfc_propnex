@@ -259,6 +259,29 @@ body {
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  overflow: hidden;
+}
+
+.presensi-content-grid {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.presensi-left-col {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.presensi-right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 /* ===== Presence List ===== */
@@ -444,6 +467,16 @@ body {
   margin-top: 12px;
 }
 
+.card-info-grid.single-col,
+.presensi-grid-bottom.single-col {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.single-col .info-item {
+  padding: 8px 10px;
+}
+
 .presence-list-header {
   display: flex;
   flex-direction: column;
@@ -535,6 +568,29 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: var(--transition);
+}
+
+.scan-card.small-scan {
+  flex: 0 0 auto;
+  min-height: 240px;
+  padding: 24px;
+}
+
+.small-scan .scan-rings {
+  transform: translate(-50%, -50%);
+}
+
+.small-scan .ring-1 {
+  width: 80px;
+  height: 80px;
+}
+.small-scan .ring-2 {
+  width: 120px;
+  height: 120px;
+}
+.small-scan .ring-3 {
+  width: 160px;
+  height: 160px;
 }
 
 .scan-card::before {
