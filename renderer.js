@@ -28,7 +28,8 @@ const vcardUrlEl = document.getElementById("vcardUrl");
 const uriDisplayEl = document.getElementById("uriDisplay");
 const uriValueEl = document.getElementById("uriValue");
 const textDisplayEl = document.getElementById("textDisplay");
-const textValueEl = document.getElementById("textValue");
+const agentIdValueEl = document.getElementById("agentIdValue");
+const branchCodeValueEl = document.getElementById("branchCodeValue");
 const rawDisplayEl = document.getElementById("rawDisplay");
 const rawValueEl = document.getElementById("rawValue");
 
@@ -146,7 +147,27 @@ function displayURI(data) {
 
 function displayText(data) {
   textDisplayEl.classList.remove("hidden");
-  textValueEl.textContent = data.text || "-";
+  const rawText = data.text || "";
+
+  // Format based on user request "340;1" -> Agent ID: 340, Branch: 1
+  let agentId = "-";
+  let branchCode = "-";
+
+  if (rawText.includes(";")) {
+    const parts = rawText.split(";");
+    agentId = parts[0]?.trim() || "-";
+    branchCode = parts[1]?.trim() || "-";
+  } else if (rawText.includes(",")) {
+    const parts = rawText.split(",");
+    agentId = parts[0]?.trim() || "-";
+    branchCode = parts[1]?.trim() || "-";
+  } else {
+    // Fallback if not split
+    agentId = rawText || "-";
+  }
+
+  agentIdValueEl.textContent = agentId;
+  branchCodeValueEl.textContent = branchCode;
 }
 
 function displayRaw(data) {
@@ -196,14 +217,11 @@ function showCardDetected(cardData) {
     : "Kartu Terbaca!";
 
   scanTextEl.innerHTML = `
-    <h2>${displayName} ✓</h2>
-    <p>UID: ${formatUID(cardData.uid)}</p>
+    <h2>${displayName}</h2>
   `;
 
   // Show card info panel
   cardInfoEl.classList.remove("hidden");
-  cardUIDEl.textContent = formatUID(cardData.uid);
-  cardTimeEl.textContent = `${formatDate(cardData.timestamp)} ${formatTime(cardData.timestamp)}`;
 
   // Display NDEF data
   displayNDEFRecords(cardData.ndefRecords);

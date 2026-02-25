@@ -10,7 +10,8 @@ function createWindow() {
     height: 750,
     minWidth: 700,
     minHeight: 550,
-    title: "NFC Attendance - PropNex",
+    title: "PropNex NFC Attendance System",
+    icon: path.join(__dirname, "assets", "icon.png"),
     backgroundColor: "#0f0f1a",
     titleBarStyle: "hiddenInset",
     webPreferences: {
