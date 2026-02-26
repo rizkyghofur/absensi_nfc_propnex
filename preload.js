@@ -4,6 +4,16 @@ contextBridge.exposeInMainWorld("nfcAPI", {
   // Open external URL
   openExternal: (url) => ipcRenderer.send("app:open-external", url),
 
+  // Read NFC data
+  readCard: () => ipcRenderer.invoke("nfc:read-card"),
+
+  // Write NFC data
+  writeCard: (data) => ipcRenderer.invoke("nfc:write-card", data),
+
+  // JSON Import/Export
+  importJson: () => ipcRenderer.invoke("app:import-json"),
+  exportJson: (data) => ipcRenderer.invoke("app:export-json", data),
+
   // Listen for card detected
   onCardDetected: (callback) => {
     ipcRenderer.on("nfc:card-detected", (_event, data) => callback(data));

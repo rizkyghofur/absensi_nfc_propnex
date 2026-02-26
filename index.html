@@ -49,7 +49,11 @@
 
       <!-- Navigation Tabs -->
       <nav class="nav-tabs">
-        <button class="nav-tab active" data-target="cekKartuView">
+        <button class="nav-tab active" data-target="isiKartuView">
+          <span class="tab-icon">✍️</span>
+          Isi Kartu NFC
+        </button>
+        <button class="nav-tab" data-target="cekKartuView">
           <span class="tab-icon">🔍</span>
           Cek Kartu NFC
         </button>
@@ -64,8 +68,8 @@
         <!-- VIEWS WRAPPER -->
         <div class="views-wrapper" id="viewsWrapper">
           
-          <!-- VIEW 1: CEK KARTU NFC (Default) -->
-          <div class="view-container active" id="cekKartuView">
+          <!-- VIEW 1: CEK KARTU NFC -->
+          <div class="view-container" id="cekKartuView">
             <!-- NFC Scan Area -->
             <div class="scan-section">
           <div class="scan-card" id="scanCard">
@@ -113,7 +117,7 @@
           </div>
 
           <!-- Card Info Display -->
-          <div class="card-info hidden" id="cardInfo">
+          <div class="card-info" id="cardInfo">
             <!-- NDEF Records -->
             <div class="ndef-records hidden" id="ndefRecords">
               <!-- vCard Display -->
@@ -296,6 +300,100 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- VIEW: ISI KARTU NFC (Initial) -->
+        <div class="view-container active" id="isiKartuView">
+          <div class="write-section">
+            <div class="header-action">
+              <div class="header-main">
+                <h2>Isi Data Kartu NFC</h2>
+                <p class="subtitle">Format data sesuai struktur PropNex Attendance</p>
+              </div>
+              <div class="header-buttons">
+                <button id="btnImportJson" class="btn-secondary small-btn">
+                  <span class="btn-icon">📥</span> Impor JSON
+                </button>
+                <button id="btnExportJson" class="btn-secondary small-btn">
+                  <span class="btn-icon">📤</span> Ekspor JSON
+                </button>
+              </div>
+            </div>
+
+            <form id="writeCardForm" class="write-form">
+              <div class="form-grid">
+                <!-- vCard Info -->
+                <div class="form-group-box">
+                  <div class="form-group-header">
+                    <span class="header-icon">👤</span>
+                    <h3>Informasi Kontak (vCard)</h3>
+                  </div>
+                  <div class="form-group">
+                    <label for="writeFullName">Nama Lengkap</label>
+                    <input type="text" id="writeFullName" placeholder="Contoh: Rio Ataraska" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="writeOrg">Organisasi / Kantor</label>
+                    <div class="org-input-container">
+                      <span class="org-prefix">PropNex</span>
+                      <input type="text" id="writeOrg" placeholder="Contoh: Platinum" required>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="writePhone">Nomor Telepon</label>
+                      <div class="phone-input-container">
+                        <span class="phone-prefix">+62</span>
+                        <input type="tel" id="writePhone" placeholder="8123456789" required>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="writeEmail">Email</label>
+                      <input type="email" id="writeEmail" placeholder="email@gmail.com" required>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="writeVCardUrl">Website Personal</label>
+                    <input type="url" id="writeVCardUrl" placeholder="https://propnexplus.com/..." required>
+                  </div>
+                </div>
+
+                <!-- Agent & Branch Info -->
+                <div class="form-group-box">
+                  <div class="form-group-header">
+                    <span class="header-icon">🆔</span>
+                    <h3>Agent ID & Cabang</h3>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="writeAgentId">Agent ID</label>
+                      <input type="text" id="writeAgentId" placeholder="Contoh: 340" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="writeBranchCode">Branch Code</label>
+                      <input type="text" id="writeBranchCode" placeholder="Contoh: 1" required>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group-header" style="margin-top: 20px">
+                    <span class="header-icon">🔗</span>
+                    <h3>Link vCard detail</h3>
+                  </div>
+                  <div class="form-group">
+                    <label for="writeUri">URL Contact Detail</label>
+                    <input type="url" id="writeUri" placeholder="https://propnexplus.com/.../contact-detail" required>
+                  </div>
+                  
+                  <div class="write-actions">
+                    <button type="submit" id="btnWriteCard" class="btn-primary write-btn">
+                      <span class="btn-icon">💾</span>
+                      Isi Data ke Kartu
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
 

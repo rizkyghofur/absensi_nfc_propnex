@@ -12,6 +12,7 @@ const historyEmptyEl = document.getElementById("historyEmpty");
 const btnClearEl = document.getElementById("btnClear");
 const errorToastEl = document.getElementById("errorToast");
 const errorTextEl = document.getElementById("errorText");
+const errorIconEl = errorToastEl.querySelector(".toast-icon");
 
 // NDEF elements
 const ndefRecordsEl = document.getElementById("ndefRecords");
@@ -56,7 +57,7 @@ const agentSearchInputEl = document.getElementById("agentSearchInput");
 // ===== API & State =====
 const BASE_URL = "https://newapi.propnex.id/api";
 
-let currentView = "cekKartuView";
+let currentView = "isiKartuView"; // Default view
 let scanHistory = [];
 let isReaderConnected = false;
 let toastTimeout = null;
@@ -285,9 +286,6 @@ function setupNavigation() {
       document.getElementById(targetId).classList.add("active");
       currentView = targetId;
 
-      // Reset states
-      showCardRemoved();
-
       // Warning if switching to Presensi but no event selected
       if (currentView === "presensiView" && !eventSelectEl.value) {
         showError("Silakan pilih Event terlebih dahulu untuk memulai Presensi");
@@ -297,13 +295,25 @@ function setupNavigation() {
         );
       }
 
-      // If card is still present, re-trigger detection for new view
-      if (currentCardData) {
-        if (currentView === "cekKartuView") {
-          showCardDetected(currentCardData);
-        } else if (currentView === "presensiView") {
-          handlePresensiDetected(currentCardData);
+      // If reader is connected, show current data and trigger an immediate fresh read
+      if (isReaderConnected) {
+        if (currentCardData) {
+          // Show existing data instantly to prevent flicker
+          if (currentView === "cekKartuView") {
+            showCardDetected(currentCardData, true); // Silent
+          } else if (currentView === "presensiView") {
+            handlePresensiDetected(currentCardData, true); // Silent
+          } else if (currentView === "isiKartuView") {
+            autoPopulateWriteForm(currentCardData, false);
+          }
         }
+
+        // COMPULSORY REFRESH: Always fetch latest data from physical card on tab click
+        // Silent=true ensures no flickering or sounds during this sync
+        refreshCurrentCard(true);
+      } else {
+        // No reader connected
+        showCardRemoved();
       }
     });
   });
@@ -351,21 +361,18 @@ function getInitials(name) {
 // ===== NDEF Display Functions =====
 
 function resetNDEFDisplay() {
-  ndefRecordsEl.classList.add("hidden");
-  vcardDisplayEl.classList.add("hidden");
-  uriDisplayEl.classList.add("hidden");
-  textDisplayEl.classList.add("hidden");
-  rawDisplayEl.classList.add("hidden");
-  vcardPhoneRowEl.classList.add("hidden");
-  vcardEmailRowEl.classList.add("hidden");
-  vcardUrlRowEl.classList.add("hidden");
+  // We NEVER hide the main containers anymore to prevent flickering
+  // Just clear content or handle sub-items if really needed
 }
 
 function displayNDEFRecords(records) {
+  // Reset sub-containers (no hiding)
   resetNDEFDisplay();
 
   if (!records || records.length === 0) return;
 
+  // Always ensure containers are visible now
+  cardInfoEl.classList.remove("hidden");
   ndefRecordsEl.classList.remove("hidden");
 
   for (const record of records) {
@@ -373,17 +380,18 @@ function displayNDEFRecords(records) {
 
     switch (record.recordType) {
       case "vcard":
+        vcardDisplayEl.classList.remove("hidden");
         displayVCard(record);
         break;
       case "uri":
+        uriDisplayEl.classList.remove("hidden");
         displayURI(record);
         break;
       case "text":
+        textDisplayEl.classList.remove("hidden");
         displayText(record);
         break;
-      default:
-        displayRaw(record);
-        break;
+      // Skip raw/default to keep UI clean
     }
   }
 }
@@ -517,35 +525,32 @@ function updateReaderStatus(status, readerName) {
   }
 }
 
-function showCardDetected(cardData) {
+function showCardDetected(cardData, isSilent = false) {
   // Update scan card state
   scanCardEl.classList.remove("active");
   scanCardEl.classList.add("detected");
 
-  // Check what type of data we got
-  const hasVCard = cardData.ndefRecords?.some(
-    (r) => r && r.recordType === "vcard",
-  );
-  const displayName = hasVCard
-    ? cardData.ndefRecords.find((r) => r.recordType === "vcard")?.fullName ||
-      "Kartu Terbaca!"
-    : "Kartu Terbaca!";
-
-  scanTextEl.innerHTML = `
-    <h2>${displayName}</h2>
-  `;
-
   // Show card info panel
   cardInfoEl.classList.remove("hidden");
+  ndefRecordsEl.classList.remove("hidden");
 
-  // Display NDEF data
+  // Show name in the circle if available
+  const vcard = cardData.ndefRecords?.find(
+    (r) => r && r.recordType === "vcard",
+  );
+  if (vcard && vcard.fullName) {
+    scanTextEl.innerHTML = `<h2>${vcard.fullName}</h2>`;
+  }
+
+  // Display NDEF data (vCard, URI, Text)
   displayNDEFRecords(cardData.ndefRecords);
 
-  // Add to history
-  addToHistory(cardData);
-
-  // Play subtle feedback
-  playDetectSound();
+  if (!isSilent) {
+    // Add to history
+    addToHistory(cardData);
+    // Play subtle feedback
+    playDetectSound();
+  }
 }
 
 function showCardRemoved() {
@@ -615,12 +620,12 @@ function renderHistory() {
 }
 
 function showError(message) {
-  errorTextEl.textContent = message;
-  errorToastEl.classList.remove("hidden");
+  if (toastTimeout) clearTimeout(toastTimeout);
 
-  if (toastTimeout) {
-    clearTimeout(toastTimeout);
-  }
+  errorTextEl.textContent = message;
+  errorIconEl.textContent = "⚠️";
+  errorToastEl.className = "toast error";
+  errorToastEl.classList.remove("hidden");
 
   toastTimeout = setTimeout(() => {
     errorToastEl.classList.add("hidden");
@@ -789,6 +794,8 @@ if (window.nfcAPI) {
       showCardDetected(data);
     } else if (currentView === "presensiView") {
       handlePresensiDetected(data);
+    } else if (currentView === "isiKartuView") {
+      autoPopulateWriteForm(data);
     }
   });
 
@@ -807,6 +814,243 @@ if (window.nfcAPI) {
   statusTextEl.textContent = "NFC API tidak tersedia";
 }
 
+// ===== Write Card Logic =====
+function setupWriteForm() {
+  const writeForm = document.getElementById("writeCardForm");
+  const btnWrite = document.getElementById("btnWriteCard");
+  const btnExport = document.getElementById("btnExportJson");
+  const btnImport = document.getElementById("btnImportJson");
+
+  if (!writeForm) return;
+
+  // Export JSON
+  btnExport.addEventListener("click", async () => {
+    const data = {
+      fullName: document.getElementById("writeFullName").value,
+      org: document.getElementById("writeOrg").value,
+      phone: document.getElementById("writePhone").value,
+      email: document.getElementById("writeEmail").value,
+      vcardUrl: document.getElementById("writeVCardUrl").value,
+      agentId: document.getElementById("writeAgentId").value,
+      branchCode: document.getElementById("writeBranchCode").value,
+      uri: document.getElementById("writeUri").value,
+    };
+
+    const result = await window.nfcAPI.exportJson(data);
+    if (result.success) {
+      showSuccess("Data berhasil diekspor!");
+    }
+  });
+
+  // Import JSON
+  btnImport.addEventListener("click", async () => {
+    const result = await window.nfcAPI.importJson();
+    if (result.success && result.data) {
+      const d = result.data;
+      document.getElementById("writeFullName").value = d.fullName || "";
+      // Strip "PropNex" if it exists in the imported org data
+      let orgVal = d.org || "";
+      orgVal = orgVal.replace(/^PropNex\s*/i, "").trim();
+      document.getElementById("writeOrg").value = orgVal;
+
+      document.getElementById("writePhone").value = (d.phone || "").replace(
+        "+62",
+        "",
+      );
+      document.getElementById("writeEmail").value = d.email || "";
+      document.getElementById("writeVCardUrl").value = d.vcardUrl || "";
+      document.getElementById("writeAgentId").value = d.agentId || "";
+      document.getElementById("writeBranchCode").value = d.branchCode || "";
+      document.getElementById("writeUri").value = d.uri || "";
+      showSuccess("Data berhasil diimpor!");
+    }
+  });
+
+  // Auto-URL Generation Logic
+  const nameInput = document.getElementById("writeFullName");
+  const orgInput = document.getElementById("writeOrg");
+  const vcardUrlInput = document.getElementById("writeVCardUrl");
+  const contactUriInput = document.getElementById("writeUri");
+
+  const updateUrls = () => {
+    const name = nameInput.value.trim().toLowerCase().replace(/\s+/g, "_");
+    const orgRaw = orgInput.value.trim().toLowerCase();
+    // Prefix is already handled in UI, so orgRaw is just the branch name
+    const org = orgRaw.replace(/\s+/g, "_");
+
+    if (name && org) {
+      const baseUrl = `https://propnexplus.com/${org}/${name}`;
+      vcardUrlInput.value = baseUrl;
+      contactUriInput.value = `${baseUrl}/contact-detail`;
+    }
+  };
+
+  nameInput.addEventListener("input", updateUrls);
+  orgInput.addEventListener("input", updateUrls);
+
+  writeForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!isReaderConnected) {
+      showError("Hubungkan reader terlebih dahulu.");
+      return;
+    }
+
+    if (!currentCardData) {
+      showError("Tempelkan kartu NFC ke reader.");
+      return;
+    }
+
+    const fullName = document.getElementById("writeFullName").value;
+    const orgValue = document.getElementById("writeOrg").value;
+    const org = orgValue
+      ? `PropNex ${orgValue.replace(/^PropNex\s*/i, "").trim()}`
+      : "PropNex Indonesia";
+    const phoneValue = document.getElementById("writePhone").value;
+    const phone = phoneValue ? `+62${phoneValue.replace(/^\+62/, "")}` : "";
+    const email = document.getElementById("writeEmail").value;
+    const vcardUrl = document.getElementById("writeVCardUrl").value;
+    const agentId = document.getElementById("writeAgentId").value;
+    const branchCode = document.getElementById("writeBranchCode").value;
+    const customUri = document.getElementById("writeUri").value;
+
+    // Construct vCard string
+    let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nORG:${org}\n`;
+    if (phone) vcard += `TEL:${phone}\n`;
+    if (email) vcard += `EMAIL:${email}\n`;
+    if (vcardUrl) vcard += `URL:${vcardUrl}\n`;
+    vcard += `END:VCARD`;
+
+    const writeData = {
+      vcard,
+      agentInfo: `${agentId};${branchCode}`,
+      uri: customUri || null,
+    };
+
+    try {
+      btnWrite.disabled = true;
+      btnWrite.classList.add("writing");
+      btnWrite.innerHTML = `<span class="btn-icon">⏳</span> Menulis...`;
+
+      const result = await window.nfcAPI.writeCard(writeData);
+
+      if (result.success) {
+        showSuccess(result.message || "Kartu berhasil diisi!");
+        // Refresh card data immediately and also after a short delay
+        // to ensure currentCardData is perfectly in sync for other tabs
+        refreshCurrentCard(true); // Silent update of global state
+        setTimeout(() => refreshCurrentCard(true), 500);
+      }
+    } catch (err) {
+      showError(err.message || "Gagal menulis ke kartu.");
+    } finally {
+      btnWrite.disabled = false;
+      btnWrite.classList.remove("writing");
+      btnWrite.innerHTML = `<span class="btn-icon">💾</span> Isi Data ke Kartu`;
+    }
+  });
+}
+
+async function refreshCurrentCard(isSilent = false) {
+  try {
+    const result = await window.nfcAPI.readCard();
+    console.log("[Renderer] Manual refresh result:", result);
+
+    if (result && result.success && result.card) {
+      currentCardData = result.card;
+      console.log(
+        "[Renderer] Updated currentCardData after refresh:",
+        currentCardData,
+      );
+
+      if (currentView === "cekKartuView") {
+        showCardDetected(currentCardData, isSilent);
+      } else if (currentView === "presensiView") {
+        handlePresensiDetected(currentCardData, isSilent);
+      } else if (currentView === "isiKartuView") {
+        autoPopulateWriteForm(currentCardData, false); // false = don't show success toast again
+      }
+    } else {
+      // If not silent or if we were explicitly told no card
+      if (!isSilent) {
+        currentCardData = null;
+        showCardRemoved();
+      }
+    }
+  } catch (err) {
+    console.error("[Renderer] Error refreshing card:", err);
+  }
+}
+
+function autoPopulateWriteForm(cardData, showToast = true) {
+  if (!cardData || !cardData.ndefRecords) return;
+
+  const records = cardData.ndefRecords;
+  const vcard = records.find((r) => r && r.recordType === "vcard");
+  const uri = records.find((r) => r && r.recordType === "uri");
+  const text = records.find((r) => r && r.recordType === "text");
+
+  // Populate VCard fields
+  if (vcard) {
+    if (vcard.fullName)
+      document.getElementById("writeFullName").value = vcard.fullName;
+    if (vcard.organization) {
+      // Strip "PropNex" prefix for UI
+      const org = vcard.organization.replace(/^PropNex\s*/i, "").trim();
+      document.getElementById("writeOrg").value = org;
+    }
+    if (vcard.phone) {
+      // Strip "+62" for UI
+      const phone = vcard.phone.replace(/^\+62/, "");
+      document.getElementById("writePhone").value = phone;
+    }
+    if (vcard.email) document.getElementById("writeEmail").value = vcard.email;
+    if (vcard.url) document.getElementById("writeVCardUrl").value = vcard.url;
+  }
+
+  // Populate URI field
+  if (uri && uri.uri) {
+    document.getElementById("writeUri").value = uri.uri;
+  }
+
+  // Populate Agent Info fields
+  if (text && text.text) {
+    const rawText = text.text;
+    let agentId = "";
+    let branchCode = "";
+
+    if (rawText.includes(";")) {
+      const parts = rawText.split(";");
+      agentId = parts[0]?.trim() || "";
+      branchCode = parts[1]?.trim() || "";
+    } else if (rawText.includes(",")) {
+      const parts = rawText.split(",");
+      agentId = parts[0]?.trim() || "";
+      branchCode = parts[1]?.trim() || "";
+    } else {
+      agentId = rawText;
+    }
+
+    if (agentId) document.getElementById("writeAgentId").value = agentId;
+    if (branchCode)
+      document.getElementById("writeBranchCode").value = branchCode;
+  }
+}
+
+function showSuccess(message) {
+  if (toastTimeout) clearTimeout(toastTimeout);
+
+  errorTextEl.textContent = message;
+  errorIconEl.textContent = "✅";
+  errorToastEl.className = "toast success";
+  errorToastEl.classList.remove("hidden");
+
+  toastTimeout = setTimeout(() => {
+    errorToastEl.classList.add("hidden");
+  }, 5000);
+}
+
 // ===== Initialize =====
 renderHistory();
+setupWriteForm();
 initApp();

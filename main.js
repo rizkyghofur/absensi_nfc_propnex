@@ -5,8 +5,10 @@ const {
   shell,
   Menu,
   nativeImage,
+  dialog,
 } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 ipcMain.on("app:open-external", (_event, url) => {
   if (url && typeof url === "string") {
@@ -427,9 +429,12 @@ function initNFC() {
   try {
     const { NFC } = require("nfc-pcsc");
     nfc = new NFC();
+    nfc.readers = {}; // Track active readers
 
     nfc.on("reader", (reader) => {
-      console.log(`[NFC] Reader detected: ${reader.reader.name}`);
+      const readerName = reader.reader.name;
+      console.log(`[NFC] Reader detected: ${readerName}`);
+      nfc.readers[readerName] = reader; // Store reader
 
       // Disable auto-processing so we can read raw data
       reader.autoProcessing = false;
@@ -516,12 +521,13 @@ function initNFC() {
       });
 
       reader.on("end", () => {
-        console.log(`[NFC] Reader disconnected: ${reader.reader.name}`);
+        console.log(`[NFC] Reader disconnected: ${readerName}`);
+        delete nfc.readers[readerName]; // Remove reader
 
         if (mainWindow) {
           mainWindow.webContents.send("nfc:reader-status", {
             status: "disconnected",
-            readerName: reader.reader.name,
+            readerName: readerName,
           });
         }
       });
@@ -548,6 +554,232 @@ function initNFC() {
     }
   }
 }
+
+// Read card data on demand
+ipcMain.handle("nfc:read-card", async () => {
+  if (!nfc || !nfc.readers) {
+    throw new Error("NFC module tidak aktif.");
+  }
+
+  const readers = Object.values(nfc.readers);
+  const reader = readers.find((r) => r.card);
+
+  if (!reader) {
+    return { success: false, message: "Tidak ada kartu." };
+  }
+
+  try {
+    const records = await readNDEFData(reader);
+    return {
+      success: true,
+      card: {
+        uid: reader.card.uid || "unknown",
+        atr: reader.card.atr ? reader.card.atr.toString("hex") : "none",
+        ndefRecords: records ? records.map((r) => r.decoded) : [],
+      },
+    };
+  } catch (err) {
+    console.error("[NFC] Read error:", err);
+    throw new Error("Gagal membaca kartu: " + err.message);
+  }
+});
+
+// Write card data
+ipcMain.handle("nfc:write-card", async (_event, data) => {
+  console.log(
+    "[NFC] Write request received. Data:",
+    JSON.stringify(data).substring(0, 100) + "...",
+  );
+
+  if (!nfc || !nfc.readers) {
+    console.error("[NFC] NFC module not initialized");
+    throw new Error("NFC module tidak aktif.");
+  }
+
+  const readers = Object.values(nfc.readers);
+  console.log(`[NFC] Available readers: ${readers.length}`);
+
+  if (readers.length === 0) {
+    throw new Error("Reader tidak ditemukan.");
+  }
+
+  // Find the first reader with a card
+  let reader = readers.find((r) => r.card);
+
+  if (!reader) {
+    console.warn("[NFC] No card found on any reader. Detail readers:");
+    readers.forEach((r, i) => {
+      console.log(
+        `  Reader ${i}: ${r.reader.name}, Card: ${r.card ? "Present" : "None"}`,
+      );
+    });
+
+    // Fallback: use the first reader if only one is available, even if card property is null
+    // (Sometimes nfc-pcsc property doesn't sync perfectly with high-level events)
+    if (readers.length === 1) {
+      console.log(
+        "[NFC] Only one reader available. Attempting fallback to it.",
+      );
+      reader = readers[0];
+    } else {
+      throw new Error("Tempelkan kartu terlebih dahulu.");
+    }
+  }
+
+  console.log(`[NFC] Using reader: ${reader.reader.name} for writing.`);
+
+  try {
+    const ndefBuffer = encodeNDEF(data);
+    await writeNDEFToTag(reader, ndefBuffer);
+    return { success: true, message: "Kartu berhasil diisi!" };
+  } catch (err) {
+    console.error("[NFC] Write error:", err);
+    throw new Error("Gagal menulis ke kartu: " + err.message);
+  }
+});
+
+/**
+ * Encode data into NDEF Buffer.
+ * Supports: vCard, Text (Agent Info), and URI.
+ */
+function encodeNDEF(data) {
+  const records = [];
+
+  // 1. vCard Record (Media Type)
+  if (data.vcard) {
+    const payload = Buffer.from(data.vcard, "utf8");
+    records.push(createNDEFRecord(0x02, "text/vcard", payload));
+  }
+
+  // 2. URI Record (Well-known Type 'U')
+  if (data.uri) {
+    // Prefix 0x00 for no prefix
+    const payload = Buffer.concat([
+      Buffer.from([0x00]),
+      Buffer.from(data.uri, "utf8"),
+    ]);
+    records.push(createNDEFRecord(0x01, "U", payload));
+  }
+
+  // 3. Text Record (Well-known Type 'T') - Agent Info "AgentID;BranchCode"
+  if (data.agentInfo) {
+    // Payload: [Status Byte] [Lang Code] [Text]
+    // Status Byte: bit 7 = 0 (UTF-8), bits 5-0 = length of lang code (2 for 'en')
+    const langCode = Buffer.from("en", "ascii");
+    const textPayload = Buffer.from(data.agentInfo, "utf8");
+    const statusByte = Buffer.from([langCode.length]);
+    const payload = Buffer.concat([statusByte, langCode, textPayload]);
+    records.push(createNDEFRecord(0x01, "T", payload));
+  }
+
+  // Assemble records into a single message
+  return records.reduce((acc, record, idx) => {
+    // Set Message Begin (MB) and Message End (ME) flags
+    let header = record.header;
+    if (idx === 0) header |= 0x80; // MB
+    if (idx === records.length - 1) header |= 0x40; // ME
+
+    const headerBuf = Buffer.from([header]);
+    return Buffer.concat([acc, headerBuf, record.data]);
+  }, Buffer.alloc(0));
+}
+
+function createNDEFRecord(tnf, type, payload) {
+  const typeBuf = Buffer.from(type, "ascii");
+  const isShortRecord = payload.length <= 255;
+
+  // Header: SR flag if payload <= 255
+  let header = tnf & 0x07;
+  if (isShortRecord) header |= 0x10;
+
+  const dataParts = [Buffer.from([typeBuf.length])];
+
+  if (isShortRecord) {
+    dataParts.push(Buffer.from([payload.length]));
+  } else {
+    const lenBuf = Buffer.alloc(4);
+    lenBuf.writeUInt32BE(payload.length);
+    dataParts.push(lenBuf);
+  }
+
+  dataParts.push(typeBuf);
+  dataParts.push(payload);
+
+  return {
+    header,
+    data: Buffer.concat(dataParts),
+  };
+}
+
+async function writeNDEFToTag(reader, ndefBuffer) {
+  // Wrap NDEF message in TLV (Type 0x03)
+  let tlv;
+  if (ndefBuffer.length < 255) {
+    tlv = Buffer.concat([
+      Buffer.from([0x03, ndefBuffer.length]),
+      ndefBuffer,
+      Buffer.from([0xfe]),
+    ]);
+  } else {
+    const lenBuf = Buffer.alloc(3);
+    lenBuf[0] = 0xff;
+    lenBuf.writeUInt16BE(ndefBuffer.length, 1);
+    tlv = Buffer.concat([
+      Buffer.from([0x03]),
+      lenBuf,
+      ndefBuffer,
+      Buffer.from([0xfe]),
+    ]);
+  }
+
+  // Standard NTAG/Ultralight write starts at page 4 after CC (Capability Container at page 3)
+  const PAGE_SIZE = 4;
+  let offset = 0;
+  let page = 4;
+
+  while (offset < tlv.length) {
+    const chunk = Buffer.alloc(PAGE_SIZE);
+    tlv.copy(chunk, 0, offset, Math.min(offset + PAGE_SIZE, tlv.length));
+
+    await reader.write(page, chunk, PAGE_SIZE);
+
+    offset += PAGE_SIZE;
+    page++;
+
+    // Safety break for very large messages exceeding common tag limits
+    if (page > 230) break; // ~NTAG216 limit
+  }
+}
+
+// Export data to JSON
+ipcMain.handle("app:export-json", async (_event, data) => {
+  const { filePath } = await dialog.showSaveDialog({
+    title: "Simpan Data Kartu",
+    defaultPath: "nfc_card_data.json",
+    filters: [{ name: "JSON Files", extensions: ["json"] }],
+  });
+
+  if (filePath) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    return { success: true, path: filePath };
+  }
+  return { success: false };
+});
+
+// Import data from JSON
+ipcMain.handle("app:import-json", async () => {
+  const { filePaths } = await dialog.showOpenDialog({
+    title: "Pilih File Data Kartu",
+    filters: [{ name: "JSON Files", extensions: ["json"] }],
+    properties: ["openFile"],
+  });
+
+  if (filePaths && filePaths.length > 0) {
+    const content = fs.readFileSync(filePaths[0], "utf8");
+    return { success: true, data: JSON.parse(content) };
+  }
+  return { success: false };
+});
 
 app.whenReady().then(() => {
   createWindow();
