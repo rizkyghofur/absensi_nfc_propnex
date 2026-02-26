@@ -46,6 +46,7 @@ const presensiScanTextEl = document.getElementById("presensiScanText");
 const presensiResultInfoEl = document.getElementById("presensiResultInfo");
 const presensiStatusBoxEl = document.getElementById("presensiStatusBox");
 const presensiAgentNameEl = document.getElementById("presensiAgentName");
+const presensiBranchNameEl = document.getElementById("presensiBranchName");
 const presensiTimeEl = document.getElementById("presensiTime");
 const presensiAgentIdEl = document.getElementById("presensiAgentId");
 const presensiBranchCodeEl = document.getElementById("presensiBranchCode");
@@ -717,14 +718,15 @@ if (window.nfcAPI) {
     let agentId = null;
     let branchCode = null;
     let agentName = "Unknown";
+    let branchName = "-";
 
     const hasVCard = cardData.ndefRecords?.some(
       (r) => r && r.recordType === "vcard",
     );
     if (hasVCard) {
-      agentName =
-        cardData.ndefRecords.find((r) => r.recordType === "vcard")?.fullName ||
-        "Unknown";
+      const vcard = cardData.ndefRecords.find((r) => r.recordType === "vcard");
+      agentName = vcard?.fullName || "Unknown";
+      branchName = vcard?.organization || "-";
     }
 
     const textRecord = cardData.ndefRecords?.find(
@@ -774,6 +776,7 @@ if (window.nfcAPI) {
           "✔ " + (response.message || "Presensi Berhasil");
 
         presensiAgentNameEl.textContent = agentName;
+        presensiBranchNameEl.textContent = branchName;
         presensiTimeEl.textContent = formatTime(new Date().toISOString());
         presensiAgentIdEl.textContent = agentId;
         presensiBranchCodeEl.textContent = branchCode;
@@ -794,6 +797,7 @@ if (window.nfcAPI) {
           "❌ " + (response?.message || "Presensi Gagal");
 
         presensiAgentNameEl.textContent = agentName;
+        presensiBranchNameEl.textContent = branchName;
         presensiTimeEl.textContent = "-";
         presensiAgentIdEl.textContent = agentId;
         presensiBranchCodeEl.textContent = branchCode;
