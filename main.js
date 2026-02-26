@@ -753,9 +753,34 @@ async function writeNDEFToTag(reader, ndefBuffer) {
 
 // Export data to JSON
 ipcMain.handle("app:export-json", async (_event, data) => {
+  // Generate a friendly filename from the agent's name and branch
+  let filename = "nfc_card_data.json";
+
+  if (data.fullName) {
+    const nameSlug = data.fullName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s-]+/g, "_");
+
+    let orgSlug = "";
+    if (data.org) {
+      orgSlug =
+        "_" +
+        data.org
+          .replace(/^PropNex\s*/i, "") // Strip PropNex prefix
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/[\s-]+/g, "_");
+    }
+
+    filename = `${nameSlug}${orgSlug}.json`;
+  }
+
   const { filePath } = await dialog.showSaveDialog({
     title: "Simpan Data Kartu",
-    defaultPath: "nfc_card_data.json",
+    defaultPath: filename,
     filters: [{ name: "JSON Files", extensions: ["json"] }],
   });
 
