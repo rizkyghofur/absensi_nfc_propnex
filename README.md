@@ -23,12 +23,14 @@ Aplikasi desktop modern yang dirancang untuk mempermudah proses absensi dan veri
 
 Alat pembaca NFC membutuhkan driver yang tepat agar dapat dikenali oleh aplikasi:
 
-- **Windows**: [Download ACS Unified Driver MSI](https://www.acs.com.hk/en/driver/3/acr122u-usb-nfc-reader/) (Pilih _MSI Installer for PC/SC Driver_).
-- **macOS**: Biasanya tidak memerlukan driver tambahan (**Plug & Play**). Jika tidak terbaca, pastikan tool `pcscd` aktif.
+- **Windows**: [Download ACS Unified Driver](https://www.acs.com.hk/en/driver/3/acr122u-usb-nfc-reader/) (Pilih _MSI Installer for PC/SC Driver_).
+- **macOS**: Biasanya tidak memerlukan driver tambahan (**Plug & Play**). Jika tidak terbaca, pastikan tool `pcscd` aktif. Namun apabila tidak terbaca, instal dahulu Homebrew.sh yang bisa diakses di [https://brew.sh/](https://brew.sh/), lalu install manual dengan perintah di terminal `brew install pcscd`, kemudian [Download ACS Unified Driver](https://www.acs.com.hk/en/driver/3/acr122u-usb-nfc-reader/) (Pilih _PC/SC Driver Installer_).
 
 ## 🚀 Cara Menjalankan (Development)
 
 Jika ingin menjalankan aplikasi dari source code:
+
+Install npm apabila belum terinstall di komputer anda, bisa akses dan ikuti petunjuk instalasi Node.js di [https://nodejs.org/en/download/](https://nodejs.org/en/download/).
 
 ```bash
 # 1. Install dependencies
