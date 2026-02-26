@@ -4,12 +4,14 @@ Aplikasi desktop modern yang dirancang untuk mempermudah proses absensi dan veri
 
 ## ✨ Fitur Utama
 
-- **Cek Kartu NFC**: Membaca data UID dan NDEF (vCard, Text, URL) secara real-time.
-- **VCard Parser**: Otomatis mengekstrak Nama, Organisasi, No HP, dan Email dari kartu agen.
-- **Mode Presensi**: Terintegrasi dengan sistem poin PropNex untuk absensi event secara cepat.
+- **Isi Kartu NFC**: Mendukung penulisan vCard, URI, dan Agent Info ke kartu NFC secara instan.
+- **Smart Form**: Pengisian data otomatis (+62 No HP, "PropNex" Cabang) dan _Auto-Populate_ data dari kartu yang sedang menempel.
+- **Real-time Sync**: Sinkronisasi data kartu secara otomatis di background saat berpindah tab atau setelah penulisan data.
+- **Ekspor JSON Dinamis**: Nama file ekspor otomatis mengikuti Nama Agen dan Cabang (contoh: `rio_ataraska_platinum.json`).
 - **Pencarian Agen**: Filter nama agen di daftar kehadiran secara real-time.
 - **Sorting Terbaru**: Daftar kehadiran otomatis menampilkan agen yang baru melakukan tap di urutan teratas.
 - **VO Point Display**: Menampilkan perolehan poin langsung di daftar kehadiran.
+- **UI Stabil & Bersih**: Transisi antar menu tanpa kedipan (_flicker-free_) dan penyembunyian detail teknis (UID/ATR) untuk tampilan yang lebih profesional.
 - **Multi-Platform**: Mendukung macOS dan Windows (Installer DMG & EXE).
 
 ## 🖥 Kebutuhan Sistem
@@ -61,10 +63,11 @@ _Catatan: File installer akan muncul di folder `/dist`._
 
 1. **Hubungkan alat ACR122U** ke port USB. Pastikan indikator lampu menyala.
 2. **Pilih Tab**:
-   - **Cek Kartu**: Untuk melihat detail teknis isi kartu.
-   - **Presensi**: Pilih **Event** terlebih dahulu di dropdown atas.
+   - **Isi Kartu**: Untuk menulis data agen baru ke kartu. Gunakan fitur _Import JSON_ untuk memuat template data.
+   - **Cek Kartu**: Untuk melihat detail vCard dan Agent ID yang sudah tersimpan di kartu.
+   - **Presensi**: Pilih **Event** terlebih dahulu di dropdown atas sebelum melakukan tap kartu peserta.
 3. **Tap Kartu**: Tempelkan kartu agen ke reader.
-4. **Konfirmasi**: Lihat status di layar ("Terkonfirmasi") dan daftar nama yang muncul di sebelah kiri.
+4. **Otomatisasi**: Data akan langsung tampil di layar. Jika di tab _Isi Kartu_, form akan terisi sendiri jika kartu lama sudah berisi data.
 
 ---
 
