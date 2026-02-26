@@ -1,6 +1,9 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, shell } = require("electron");
 
 contextBridge.exposeInMainWorld("nfcAPI", {
+  // Open external URL
+  openExternal: (url) => ipcRenderer.send("app:open-external", url),
+
   // Listen for card detected
   onCardDetected: (callback) => {
     ipcRenderer.on("nfc:card-detected", (_event, data) => callback(data));

@@ -1,7 +1,7 @@
 {
   "name": "propnex-nfc-attendance",
   "productName": "PropNex NFC Attendance System",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PropNex NFC Attendance System",
   "main": "main.js",
   "scripts": {
@@ -35,11 +35,11 @@
       "output": "dist"
     },
     "mac": {
-      "icon": "assets/icon.png",
+      "icon": "assets/icon.icns",
       "category": "public.app-category.business"
     },
     "win": {
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.ico"
     },
     "linux": {
       "icon": "assets/icon.png"

@@ -62,6 +62,7 @@ let isReaderConnected = false;
 let toastTimeout = null;
 let isSubmitting = false;
 let participantsList = []; // Local storage for searching
+let currentCardData = null; // Track card currently on reader
 
 // ===== Initialization =====
 async function initApp() {
@@ -75,6 +76,11 @@ async function initApp() {
       loadPresenceList(eventId);
     } else {
       renderPresenceList([]);
+    }
+
+    // Update scan area text if currently in presensi view
+    if (currentView === "presensiView" && isReaderConnected) {
+      updateReaderStatus("connected", statusTextEl.textContent);
     }
   });
 
@@ -241,6 +247,16 @@ async function loadEvents() {
         option.textContent = event.name_event;
         eventSelectEl.appendChild(option);
       });
+
+      // Auto-select if only one event
+      if (events.length === 1) {
+        eventSelectEl.value = events[0].id_event;
+        loadPresenceList(events[0].id_event);
+        // Also update scan instruction if already in presensi view
+        if (currentView === "presensiView" && isReaderConnected) {
+          updateReaderStatus("connected", statusTextEl.textContent);
+        }
+      }
     } else {
       eventSelectEl.innerHTML =
         '<option value="">Tidak ada event aktif</option>';
@@ -271,6 +287,24 @@ function setupNavigation() {
 
       // Reset states
       showCardRemoved();
+
+      // Warning if switching to Presensi but no event selected
+      if (currentView === "presensiView" && !eventSelectEl.value) {
+        showError("Silakan pilih Event terlebih dahulu untuk memulai Presensi");
+        updateReaderStatus(
+          isReaderConnected ? "connected" : "disconnected",
+          statusTextEl.textContent,
+        );
+      }
+
+      // If card is still present, re-trigger detection for new view
+      if (currentCardData) {
+        if (currentView === "cekKartuView") {
+          showCardDetected(currentCardData);
+        } else if (currentView === "presensiView") {
+          handlePresensiDetected(currentCardData);
+        }
+      }
     });
   });
 }
@@ -364,22 +398,52 @@ function displayVCard(data) {
   if (data.phone) {
     vcardPhoneRowEl.classList.remove("hidden");
     vcardPhoneEl.textContent = data.phone;
+    vcardPhoneEl.style.cursor = "pointer";
+    vcardPhoneEl.style.textDecoration = "underline";
+    vcardPhoneEl.style.color = "#3b82f6";
+    vcardPhoneEl.onclick = (e) => {
+      e.preventDefault();
+      window.nfcAPI.openExternal(`tel:${data.phone}`);
+    };
   }
 
   if (data.email) {
     vcardEmailRowEl.classList.remove("hidden");
     vcardEmailEl.textContent = data.email;
+    vcardEmailEl.style.cursor = "pointer";
+    vcardEmailEl.style.textDecoration = "underline";
+    vcardEmailEl.style.color = "#3b82f6";
+    vcardEmailEl.onclick = (e) => {
+      e.preventDefault();
+      window.nfcAPI.openExternal(`mailto:${data.email}`);
+    };
   }
 
   if (data.url) {
     vcardUrlRowEl.classList.remove("hidden");
     vcardUrlEl.textContent = data.url;
+    vcardUrlEl.style.cursor = "pointer";
+    vcardUrlEl.style.textDecoration = "underline";
+    vcardUrlEl.style.color = "#3b82f6";
+    vcardUrlEl.onclick = (e) => {
+      e.preventDefault();
+      window.nfcAPI.openExternal(data.url);
+    };
   }
 }
 
 function displayURI(data) {
   uriDisplayEl.classList.remove("hidden");
   uriValueEl.textContent = data.uri || "-";
+  if (data.uri) {
+    uriValueEl.style.cursor = "pointer";
+    uriValueEl.style.textDecoration = "underline";
+    uriValueEl.style.color = "#3b82f6";
+    uriValueEl.onclick = (e) => {
+      e.preventDefault();
+      window.nfcAPI.openExternal(data.uri);
+    };
+  }
 }
 
 function displayText(data) {
@@ -423,14 +487,17 @@ function updateReaderStatus(status, readerName) {
     readerStatusEl.classList.add("connected");
     scanCardEl.classList.add("active");
     presensiScanCardEl.classList.add("active");
-    scanTextEl.innerHTML = `
-      <h2>Siap Membaca</h2>
-      <p>Tempelkan kartu NFC ke reader</p>
-    `;
-    presensiScanTextEl.innerHTML = `
-      <h2>Siap Membaca</h2>
-      <p>Tempelkan kartu peserta ke reader</p>
-    `;
+    if (currentView === "presensiView" && !eventSelectEl.value) {
+      presensiScanTextEl.innerHTML = `
+        <h2 style="color: var(--warning)">Pilih Event</h2>
+        <p>Tentukan event di dropdown atas</p>
+      `;
+    } else {
+      presensiScanTextEl.innerHTML = `
+        <h2>Siap Membaca</h2>
+        <p>Tempelkan kartu peserta ke reader</p>
+      `;
+    }
   } else {
     statusDotEl.className = "status-dot disconnected";
     statusTextEl.textContent = "Reader Terputus";
@@ -717,6 +784,7 @@ if (window.nfcAPI) {
 
   window.nfcAPI.onCardDetected((data) => {
     console.log("[Renderer] Card detected:", data);
+    currentCardData = data;
     if (currentView === "cekKartuView") {
       showCardDetected(data);
     } else if (currentView === "presensiView") {
@@ -726,6 +794,7 @@ if (window.nfcAPI) {
 
   window.nfcAPI.onCardRemoved((data) => {
     console.log("[Renderer] Card removed:", data);
+    currentCardData = null;
     showCardRemoved();
   });
 

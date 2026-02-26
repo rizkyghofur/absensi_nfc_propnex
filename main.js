@@ -1,5 +1,18 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  shell,
+  Menu,
+  nativeImage,
+} = require("electron");
 const path = require("path");
+
+ipcMain.on("app:open-external", (_event, url) => {
+  if (url && typeof url === "string") {
+    shell.openExternal(url);
+  }
+});
 
 // Set process title and name for better branding
 process.title = "PropNex NFC";
@@ -9,13 +22,35 @@ let mainWindow;
 let nfc;
 
 function createWindow() {
+  const isMac = process.platform === "darwin";
+  const isWin = process.platform === "win32";
+
+  let windowIconPath = path.join(__dirname, "assets", "icon.png");
+  if (isMac) {
+    windowIconPath = path.join(__dirname, "assets", "icon.icns");
+  } else if (isWin) {
+    windowIconPath = path.join(__dirname, "assets", "icon.ico");
+  }
+
+  // Load icon as NativeImage for robustness
+  let appIcon = nativeImage.createFromPath(windowIconPath);
+
+  // Fallback to PNG if platform-specific icon fails to load
+  if (appIcon.isEmpty() && (isMac || isWin)) {
+    console.warn(
+      `[Branding] Failed to load platform-specific icon: ${windowIconPath}. Falling back to PNG.`,
+    );
+    windowIconPath = path.join(__dirname, "assets", "icon.png");
+    appIcon = nativeImage.createFromPath(windowIconPath);
+  }
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 750,
     minWidth: 700,
     minHeight: 550,
     title: "PropNex NFC Attendance System",
-    icon: path.join(__dirname, "assets", "icon.png"),
+    icon: appIcon,
     backgroundColor: "#0f0f1a",
     titleBarStyle: "hiddenInset",
     webPreferences: {
@@ -26,11 +61,29 @@ function createWindow() {
   });
 
   // Set dock icon explicitly for macOS
-  if (process.platform === "darwin") {
-    app.dock.setIcon(path.join(__dirname, "assets", "icon.png"));
+  if (isMac && !appIcon.isEmpty()) {
+    app.dock.setIcon(appIcon);
   }
 
+  // Set About Panel options (macOS & Linux)
+  app.setAboutPanelOptions({
+    applicationName: "PropNex NFC Attendance System",
+    applicationVersion: app.getVersion(),
+    copyright: "© 2026 PropNex Indonesia",
+    version: app.getVersion(),
+    credits: "PropNex IT Team",
+    authors: ["PropNex Indonesia"],
+    website: "https://www.propnex.co.id",
+    iconPath: windowIconPath,
+  });
+
   mainWindow.loadFile("index.html");
+
+  // Open external links in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    require("electron").shell.openExternal(url);
+    return { action: "deny" };
+  });
 
   mainWindow.on("closed", () => {
     mainWindow = null;
