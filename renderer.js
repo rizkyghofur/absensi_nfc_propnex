@@ -53,6 +53,7 @@ const presenceListEl = document.getElementById("presenceList");
 const presenceCountEl = document.getElementById("presenceCount");
 const presenceEmptyEl = document.getElementById("presenceEmpty");
 const agentSearchInputEl = document.getElementById("agentSearchInput");
+const offlineWarningEl = document.getElementById("offlineWarning");
 
 // ===== API & State =====
 const BASE_URL = "https://newapi.propnex.id/api";
@@ -92,6 +93,21 @@ async function initApp() {
     );
     renderPresenceList(filtered, true); // true = skip updating participantsList
   });
+
+  // Connectivity logic
+  window.addEventListener("online", updateConnectivityStatus);
+  window.addEventListener("offline", updateConnectivityStatus);
+  updateConnectivityStatus();
+}
+
+function updateConnectivityStatus() {
+  if (navigator.onLine) {
+    offlineWarningEl.classList.add("hidden");
+  } else if (currentView === "presensiView") {
+    offlineWarningEl.classList.remove("hidden");
+  } else {
+    offlineWarningEl.classList.add("hidden");
+  }
 }
 
 // ===== API Functions =====
@@ -151,6 +167,13 @@ async function fetchPresenceApi(eventId) {
 }
 
 async function loadPresenceList(eventId) {
+  if (!navigator.onLine) {
+    presenceListEl.innerHTML =
+      '<div class="presence-error">Koneksi internet diperlukan</div>';
+    showError("Tidak dapat memuat daftar. Periksa koneksi internet Anda.");
+    return;
+  }
+
   presenceListEl.innerHTML =
     '<div class="presence-empty">Memuat daftar kehadiran...</div>';
 
@@ -232,6 +255,11 @@ function renderPresenceList(participants, isFilter = false) {
 }
 
 async function loadEvents() {
+  if (!navigator.onLine) {
+    eventSelectEl.innerHTML = '<option value="">Offline</option>';
+    return;
+  }
+
   eventSelectEl.innerHTML = '<option value="">Memuat event...</option>';
   eventSelectEl.disabled = true;
   btnRefreshEventsEl.disabled = true;
@@ -673,6 +701,11 @@ if (window.nfcAPI) {
 
   async function handlePresensiDetected(cardData) {
     if (isSubmitting) return;
+
+    if (!navigator.onLine) {
+      showError("Koneksi terputus! Presensi memerlukan internet.");
+      return;
+    }
 
     const eventId = eventSelectEl.value;
     if (!eventId) {

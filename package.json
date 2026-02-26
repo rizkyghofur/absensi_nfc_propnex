@@ -1,7 +1,7 @@
 {
   "name": "propnex-nfc-attendance",
   "productName": "PropNex NFC Attendance System",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "PropNex NFC Attendance System",
   "main": "main.js",
   "scripts": {
