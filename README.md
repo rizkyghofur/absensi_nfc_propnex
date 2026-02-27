@@ -50,10 +50,10 @@ npm start
 Untuk membuat file `.dmg` (Mac) atau `.exe` (Windows):
 
 ```bash
-# Untuk macOS
+# Untuk macOS (wajib dijalankan di macOS)
 npm run build:mac
 
-# Untuk Windows
+# Untuk Windows (wajib dijalankan di Windows)
 npm run build:win
 ```
 
