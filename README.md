@@ -14,6 +14,12 @@ Aplikasi desktop modern yang dirancang untuk mempermudah proses absensi dan veri
 - **UI Stabil & Bersih**: Transisi antar menu tanpa kedipan (_flicker-free_) dan penyembunyian detail teknis (UID/ATR) untuk tampilan yang lebih profesional.
 - **Multi-Platform**: Mendukung macOS dan Windows (Installer DMG & EXE).
 
+## 📸 Screenshot
+
+![Screenshot 1](screenshots/1.png)
+![Screenshot 2](screenshots/2.png)
+![Screenshot 3](screenshots/3.png)
+
 ## 🖥 Kebutuhan Sistem
 
 - **Hardware**: Alat NFC Reader **ACR122U** (USB).
