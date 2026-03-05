@@ -963,6 +963,11 @@ function setupWriteForm() {
 
   orgInput.addEventListener("input", updateUrls);
 
+  const phoneInput = document.getElementById("writePhone");
+  phoneInput.addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "");
+  });
+
   writeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
