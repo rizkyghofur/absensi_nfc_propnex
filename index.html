@@ -362,11 +362,13 @@
                     <div class="form-group">
                       <label for="writeEmail">Email</label>
                       <input type="email" id="writeEmail" placeholder="email@gmail.com" required>
+                      <span id="emailError" class="input-error-text hidden">Format email tidak valid</span>
                     </div>
                   </div>
                   <div class="form-group">
                     <label for="writeVCardUrl">Website Personal</label>
                     <input type="url" id="writeVCardUrl" placeholder="https://propnexplus.com/..." required>
+                    <span id="vcardUrlError" class="input-error-text hidden">Format URL tidak valid (Gunakan propnexplus.com)</span>
                   </div>
                 </div>
 
@@ -394,6 +396,7 @@
                   <div class="form-group">
                     <label for="writeUri">URL Contact Detail</label>
                     <input type="url" id="writeUri" placeholder="https://propnexplus.com/.../contact-detail" required>
+                    <span id="contactUrlError" class="input-error-text hidden">Format URL tidak valid (Gunakan propnexplus.com)</span>
                   </div>
                   
                   <div class="write-actions">

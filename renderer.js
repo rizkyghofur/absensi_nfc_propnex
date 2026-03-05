@@ -922,51 +922,105 @@ function setupWriteForm() {
     }
   };
 
-  nameInput.addEventListener("input", function () {
-    const start = this.selectionStart;
-    const end = this.selectionEnd;
+  // Shared robust auto-capitalization logic
+  const formatCapitalizedField = (input, callback) => {
+    input.addEventListener("input", function () {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const original = this.value;
 
-    const original = this.value;
+      const formatted = original
+        .split(/(\s+)/)
+        .map((part) => {
+          if (/\w/.test(part)) {
+            const isAllUpper = part.length > 1 && part === part.toUpperCase();
+            const isAllLower = part === part.toLowerCase();
+            const hasCapsGlitch =
+              (part.length > 2 && /[A-Z][a-z][A-Z]/.test(part)) ||
+              /[a-z][A-Z]$/.test(part);
 
-    // Transform each word based on its current casing
-    const formatted = original
-      .split(/(\s+)/)
-      .map((part) => {
-        // If it's a word (not just whitespace)
-        if (/\w/.test(part)) {
-          const isAllUpper = part.length > 1 && part === part.toUpperCase();
-          const isAllLower = part === part.toLowerCase();
-
-          // Handle "RiO" / "AtA" glitch caused by typing Caps Lock after the first letter was auto-capitalized
-          // Matches an uppercase letter coming after index 0 (e.g. "Ri" + "O" = "RiO")
-          const hasCapsGlitch =
-            (part.length > 2 && /[A-Z][a-z][A-Z]/.test(part)) ||
-            /[a-z][A-Z]$/.test(part);
-
-          if (isAllUpper || isAllLower || hasCapsGlitch) {
-            // Transform to Title Case
-            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+            if (isAllUpper || isAllLower || hasCapsGlitch) {
+              return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+            }
           }
-          // Preserve mixed case (e.g., McDonald, PropNex) if already typed correctly
-        }
-        return part;
-      })
-      .join("");
+          return part;
+        })
+        .join("");
 
-    if (original !== formatted) {
-      this.value = formatted;
-      this.setSelectionRange(start, end);
-    }
+      if (original !== formatted) {
+        this.value = formatted;
+        this.setSelectionRange(start, end);
+      }
 
-    updateUrls();
-  });
+      if (callback) callback();
+    });
+  };
 
-  orgInput.addEventListener("input", updateUrls);
+  formatCapitalizedField(nameInput, updateUrls);
+  formatCapitalizedField(orgInput, updateUrls);
 
   const phoneInput = document.getElementById("writePhone");
   phoneInput.addEventListener("input", function () {
     this.value = this.value.replace(/\D/g, "");
   });
+
+  const agentIdInput = document.getElementById("writeAgentId");
+  agentIdInput.addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "");
+  });
+
+  const branchCodeInput = document.getElementById("writeBranchCode");
+  branchCodeInput.addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "");
+  });
+
+  const emailInput = document.getElementById("writeEmail");
+  const emailError = document.getElementById("emailError");
+  if (emailInput && emailError) {
+    emailInput.addEventListener("input", function () {
+      const email = this.value.trim();
+      if (email === "") {
+        emailError.classList.add("hidden");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        emailError.classList.remove("hidden");
+      } else {
+        emailError.classList.add("hidden");
+      }
+    });
+  }
+
+  const vcardUrlError = document.getElementById("vcardUrlError");
+  const contactUrlError = document.getElementById("contactUrlError");
+
+  const validateUrl = (input, errorEl) => {
+    if (!input || !errorEl) return;
+    input.addEventListener("input", function () {
+      const url = this.value.trim();
+      if (url === "") {
+        errorEl.classList.add("hidden");
+        return;
+      }
+      try {
+        const parsed = new URL(url);
+        const isPropNex = parsed.hostname.includes("propnexplus.com");
+        if (!isPropNex) {
+          errorEl.classList.remove("hidden");
+          errorEl.textContent = "Gunakan domain propnexplus.com";
+        } else {
+          errorEl.classList.add("hidden");
+        }
+      } catch (e) {
+        errorEl.classList.remove("hidden");
+        errorEl.textContent = "Format URL tidak valid";
+      }
+    });
+  };
+
+  validateUrl(vcardUrlInput, vcardUrlError);
+  validateUrl(contactUriInput, contactUrlError);
 
   writeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -993,6 +1047,15 @@ function setupWriteForm() {
     const agentId = document.getElementById("writeAgentId").value;
     const branchCode = document.getElementById("writeBranchCode").value;
     const customUri = document.getElementById("writeUri").value;
+
+    // Email validation
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError("Format email tidak valid.");
+        return;
+      }
+    }
 
     // Construct vCard string
     let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nORG:${org}\n`;
