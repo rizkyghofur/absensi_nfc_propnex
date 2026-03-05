@@ -922,7 +922,45 @@ function setupWriteForm() {
     }
   };
 
-  nameInput.addEventListener("input", updateUrls);
+  nameInput.addEventListener("input", function () {
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+
+    const original = this.value;
+
+    // Transform each word based on its current casing
+    const formatted = original
+      .split(/(\s+)/)
+      .map((part) => {
+        // If it's a word (not just whitespace)
+        if (/\w/.test(part)) {
+          const isAllUpper = part.length > 1 && part === part.toUpperCase();
+          const isAllLower = part === part.toLowerCase();
+
+          // Handle "RiO" / "AtA" glitch caused by typing Caps Lock after the first letter was auto-capitalized
+          // Matches an uppercase letter coming after index 0 (e.g. "Ri" + "O" = "RiO")
+          const hasCapsGlitch =
+            (part.length > 2 && /[A-Z][a-z][A-Z]/.test(part)) ||
+            /[a-z][A-Z]$/.test(part);
+
+          if (isAllUpper || isAllLower || hasCapsGlitch) {
+            // Transform to Title Case
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+          }
+          // Preserve mixed case (e.g., McDonald, PropNex) if already typed correctly
+        }
+        return part;
+      })
+      .join("");
+
+    if (original !== formatted) {
+      this.value = formatted;
+      this.setSelectionRange(start, end);
+    }
+
+    updateUrls();
+  });
+
   orgInput.addEventListener("input", updateUrls);
 
   writeForm.addEventListener("submit", async (e) => {

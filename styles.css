@@ -239,6 +239,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .view-container {
@@ -246,10 +247,29 @@ body {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .view-container.active {
   display: flex;
+}
+
+.view-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.view-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.view-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.view-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .presensi-section {
@@ -577,11 +597,11 @@ body {
 /* ===== Scan Section ===== */
 .scan-section {
   flex: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  min-height: 0;
 }
 
 .scan-card {
@@ -596,6 +616,7 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: var(--transition);
+  min-height: 200px;
 }
 
 .scan-card.small-scan {
